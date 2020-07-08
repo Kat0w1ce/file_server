@@ -1,1 +1,0 @@
-/bin/g++-9  -g  -rdynamic CMakeFiles/demo.dir/main.cpp.o CMakeFiles/demo.dir/ftp_server.cpp.o  -o demo  /usr/lib/x86_64-linux-gnu/libboost_system.so.1.71.0 /usr/lib/x86_64-linux-gnu/libboost_thread.so.1.71.0 /usr/lib/x86_64-linux-gnu/libboost_regex.so.1.71.0 /usr/lib/x86_64-linux-gnu/libboost_atomic.so.1.71.0 -lpthread 

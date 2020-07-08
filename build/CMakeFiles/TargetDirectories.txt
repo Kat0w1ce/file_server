@@ -1,3 +1,0 @@
-/home/katowizz/ftp/build/CMakeFiles/rebuild_cache.dir
-/home/katowizz/ftp/build/CMakeFiles/edit_cache.dir
-/home/katowizz/ftp/build/CMakeFiles/demo.dir
