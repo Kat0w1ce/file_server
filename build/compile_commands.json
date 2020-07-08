@@ -1,0 +1,12 @@
+[
+{
+  "directory": "/home/katowizz/ftp/build",
+  "command": "/bin/g++-9  -DBOOST_ALL_NO_LIB -DBOOST_ATOMIC_DYN_LINK -DBOOST_REGEX_DYN_LINK -DBOOST_SYSTEM_DYN_LINK -DBOOST_THREAD_DYN_LINK  -g   -o CMakeFiles/demo.dir/main.cpp.o -c /home/katowizz/ftp/src/main.cpp",
+  "file": "/home/katowizz/ftp/src/main.cpp"
+},
+{
+  "directory": "/home/katowizz/ftp/build",
+  "command": "/bin/g++-9  -DBOOST_ALL_NO_LIB -DBOOST_ATOMIC_DYN_LINK -DBOOST_REGEX_DYN_LINK -DBOOST_SYSTEM_DYN_LINK -DBOOST_THREAD_DYN_LINK  -g   -o CMakeFiles/demo.dir/ftp_server.cpp.o -c /home/katowizz/ftp/src/ftp_server.cpp",
+  "file": "/home/katowizz/ftp/src/ftp_server.cpp"
+}
+]

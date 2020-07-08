@@ -1,0 +1,22 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/katowizz/ftp/src/ftp_server.cpp
+ftp_server.h
+/home/katowizz/ftp/src/ftp_server.h
+iostream
+-
+
+/home/katowizz/ftp/src/ftp_server.h
+boost/asio.hpp
+-
+memory
+-
+string
+-
+
