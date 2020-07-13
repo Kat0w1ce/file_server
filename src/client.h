@@ -1,0 +1,15 @@
+#include<boost/asio.hpp>
+#include<string>
+class client {
+ private:
+//   boost::asio::io_service io_service;
+  boost::asio::ip::tcp::endpoint endpoint;
+ public:
+//   client(std::string ip,int port);
+  client ();
+  ~client();
+  void run();
+};
+
+
+client::~client() {}
