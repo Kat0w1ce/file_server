@@ -1,5 +1,6 @@
 #include<boost/asio.hpp>
 #include<string>
+#include <unistd.h>
 class client {
  private:
 //   boost::asio::io_service io_service;
@@ -7,9 +8,8 @@ class client {
  public:
 //   client(std::string ip,int port);
   client ();
-  ~client();
+  ~client(){};
   void run();
 };
 
 
-client::~client() {}

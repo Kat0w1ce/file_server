@@ -1,3 +1,4 @@
+#pragma once
 #include <boost/asio.hpp>
 #include <memory>
 #include <string>
@@ -13,6 +14,7 @@ class ftpServer {
  private:
   const std::string localhost;
   const int Port;
+  const size_t blocksize;
   std::unique_ptr<boost::asio::ip::tcp::acceptor> acceptor;
   boost::asio::ip::tcp::endpoint endpoint;
 };
