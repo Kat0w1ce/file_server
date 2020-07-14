@@ -23,7 +23,7 @@ void client::run(const std::string filepath){
     std::string buf(1024,'\0');
     cout<<'a'<<endl;
     sock.connect(endpoint);
-    
+
     while( true){
         auto cnt=sock.read_some(buffer(buf));
         cout<<cnt<<endl;
