@@ -1,7 +1,7 @@
 #include "client.h"
-
-int main(){
+int main(int argc, char const *argv[])
+{
     client c;
-    c.run();
-    // sleep(2);
+    c.run(std::string(argv[1]));
+    return 0;
 }

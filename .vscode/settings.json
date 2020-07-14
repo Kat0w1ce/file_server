@@ -90,6 +90,7 @@
         "ranges": "cpp",
         "stop_token": "cpp",
         "cinttypes": "cpp",
-        "*.ipp": "cpp"
+        "*.ipp": "cpp",
+        "filesystem": "cpp"
     }
 }

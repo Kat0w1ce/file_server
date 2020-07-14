@@ -9,7 +9,7 @@ class client {
 //   client(std::string ip,int port);
   client ();
   ~client(){};
-  void run();
+  void run(const std::string filepath);
 };
 
 

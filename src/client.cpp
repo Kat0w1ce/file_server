@@ -9,10 +9,10 @@ client::client(){
   endpoint.address().from_string("127.0.0.1");
     
 }
-void client::run(){
+void client::run(const std::string filepath){
     io_service io;
     std::string s("hello");
-    std::ofstream out("b.png",std::iostream::out);
+    std::ofstream out(filepath,std::iostream::out);
     if(!out.is_open()){
         std::cout<<"fl"<<std::endl;
         return;
@@ -21,10 +21,10 @@ void client::run(){
     ip::tcp::socket sock(io);
     // char buf[1024];
     std::string buf(1024,'\0');
+    cout<<'a'<<endl;
     sock.connect(endpoint);
-
+    
     while( true){
-        cout<<'a'<<endl;
         auto cnt=sock.read_some(buffer(buf));
         cout<<cnt<<endl;
         if(cnt==1024)
