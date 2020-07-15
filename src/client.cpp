@@ -1,5 +1,6 @@
 #include "client.h"
 
+#include <boost/filesystem.hpp>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -46,11 +47,15 @@ std::pair<int, std::string> client::build_cmd(int argc, char const* argv[]) {
     } else if (kind == std::string("-g")) {
         cmd += "1 ";
         op = 1;
+        // char tmp[100];
+        // realpath(argv[2], tmp);
+        // boost::filesystem::path p(sdstring(tmp));
         std::string fn(argv[2]);
         cmd += fn;
     } else if (kind == std::string("-p")) {
         cmd += "2 ";
         op = 2;
+        char tmp[100];
         std::string fn(argv[2]);
         cmd += fn;
     } else {
@@ -91,7 +96,7 @@ void client::send(const std::string filepath) {
     int blocks = filesize / blocksize;
     int left = filesize % blocksize;
     cout << blocks << " " << left << endl;
-    ;
+
     for (int i = 0; i < blocks; i++) {
         s.read(buf, blocksize);
         sock.send(buffer(buf, blocksize));
