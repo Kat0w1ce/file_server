@@ -7,14 +7,13 @@ using std::cout,std::endl;
 client::client(){
   endpoint.port(9999);
   endpoint.address().from_string("127.0.0.1");
-    
 }
 void client::run(const std::string filepath){
     io_service io;
     std::string s("hello");
     std::ofstream out(filepath,std::iostream::out);
     if(!out.is_open()){
-        std::cout<<"fl"<<std::endl;
+        std::cout<<"open file error"<<std::endl;
         return;
     }
     // boost::beast::tcp_stream stream(io);
@@ -24,7 +23,7 @@ void client::run(const std::string filepath){
     cout<<'a'<<endl;
     sock.connect(endpoint);
 
-    while( true){
+    while(true){
         auto cnt=sock.read_some(buffer(buf));
         cout<<cnt<<endl;
         if(cnt==1024)
@@ -35,7 +34,6 @@ void client::run(const std::string filepath){
             break;
         }
     }
- 
     sock.close();
     out.close();
 }

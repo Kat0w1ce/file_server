@@ -21,6 +21,5 @@ class ftpServer {
   boost::asio::thread_pool thread_pool;
   std::unique_ptr<boost::asio::ip::tcp::acceptor> acceptor;
   boost::asio::ip::tcp::endpoint endpoint;
-  // void sendfile(pSocket socket, const std::string& filepath);
 };
 }  // namespace ftpServer
