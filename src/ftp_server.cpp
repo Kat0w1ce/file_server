@@ -56,7 +56,13 @@ void ftpServer::init() {
                                         boost::log::trivial::trace);
 }
 void sendfile(pSocket socket, const std::string& filepath) {
-    ifstream s(filepath);
+    char tmp[100];
+    realpath(filepath.c_str(), tmp);
+    ifstream s(tmp);
+    if (!s.is_open()) {
+        cout << "can't open " << tmp << endl;
+        return;
+    }
     s.seekg(0, s.end);
     auto filesize = s.tellg();
     s.seekg(0, s.beg);
