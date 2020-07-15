@@ -1,6 +1,7 @@
 #include <unistd.h>
 
 #include <boost/asio.hpp>
+#include <filesystem>
 #include <string>
 class client {
    private:

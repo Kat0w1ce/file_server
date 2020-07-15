@@ -22,7 +22,7 @@ ftpServer::ftpServer(const string ip, const int port)
       endpoint(ip::tcp::v4(), port),
       acceptor(nullptr),
       blocksize(1024),
-      thread_pool(4) {}
+      thread_pool(1) {}
 
 void ftpServer::start() {
     io_service ios;
@@ -47,7 +47,6 @@ void getfile(pSocket socket, const std::string& filepath) {
             break;
         }
     }
-    socket->close();
     out.close();
 }
 void ftpServer::init() {
@@ -56,7 +55,12 @@ void ftpServer::init() {
                                         boost::log::trivial::trace);
 }
 void sendfile(pSocket socket, const std::string& filepath) {
+    cout << filepath << endl;
     ifstream s(filepath);
+    if (!s.is_open()) {
+        cout << "can't open " << filepath << endl;
+        return;
+    }
     s.seekg(0, s.end);
     auto filesize = s.tellg();
     s.seekg(0, s.beg);
@@ -94,7 +98,9 @@ int ftpServer::file_handler() {
         if (op == "1") {
             string fn;
             is >> fn;
-            boost::asio::post(thread_pool, std::bind(sendfile, socket, fn));
+            boost::asio::post(thread_pool,
+                              std::bind(sendfile, std::move(socket), fn));
+            socket->close();
         } else if (op == "2") {
             string fn;
             is >> fn;

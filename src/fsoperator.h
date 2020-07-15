@@ -17,6 +17,7 @@ class fileOperator {
     }
     void ls();
     bool cd(const string& _path);
+    Path real_path(Path& cur, const string& str);
 
    private:
     boost::filesystem::path _path;
