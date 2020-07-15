@@ -33,6 +33,13 @@ void ftpServer::start() {
 void ftpServer::parser() {}
 void getfile(pSocket socket, const std::string& filepath) {
     std::ofstream out(filepath, std::iostream::out);
+    std::string proto(256, ' ');
+    auto j = socket->read_some(buffer(proto));
+    std::istringstream is(proto);
+    string filename;
+    int bls, blz, l;
+    is >> filename >> blz >> bls >> l;
+    cout << filename << blz << bls << l << endl;
     if (!out.is_open()) {
         std::cout << "open file error" << std::endl;
         return;

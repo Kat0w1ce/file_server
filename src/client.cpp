@@ -1,8 +1,10 @@
 #include "client.h"
 
+#include <algorithm>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <sstream>
 #include <string>
 using namespace boost::asio;
 using std::cout;
@@ -86,16 +88,25 @@ void client::get(const std::string filepath) {
     out.close();
 }
 
+// filename blocksize blocks leftsize
 void client::send(const std::string filepath) {
     std::ifstream s(filepath);
     s.seekg(0, s.end);
     auto filesize = s.tellg();
     s.seekg(0, s.beg);
     char* buf = new char[1024];
+    std::string proto;
+    std::ostringstream os;
+    os << filepath << ' ';
+
     int blocks = filesize / blocksize;
     int left = filesize % blocksize;
-    cout << blocks << " " << left << endl;
-    ;
+    os << std::to_string(blocksize) << ' ' << std::to_string(blocks) << ' '
+       << std::to_string(left) << endl;
+    proto = os.str();
+    proto += std::string(256 - proto.size(), ' ');
+    sock.send(buffer(proto));
+    // sleep(1);
     for (int i = 0; i < blocks; i++) {
         s.read(buf, blocksize);
         sock.send(buffer(buf, blocksize));
