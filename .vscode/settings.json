@@ -91,6 +91,9 @@
         "stop_token": "cpp",
         "cinttypes": "cpp",
         "*.ipp": "cpp",
-        "filesystem": "cpp"
-    }
+        "filesystem": "cpp",
+        "strstream": "cpp",
+        "cfenv": "cpp"
+    },
+    "C_Cpp.default.compilerPath": "/usr/bin/g++"
 }
