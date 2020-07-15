@@ -1,5 +1,6 @@
 #include "client.h"
 
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -51,8 +52,11 @@ std::pair<int, std::string> client::build_cmd(int argc, char const* argv[]) {
     } else if (kind == std::string("-p")) {
         cmd += "2 ";
         op = 2;
-        std::string fn(argv[2]);
-        cmd += fn;
+        char tmp[100];
+        realpath(argv[2], tmp);
+        std::filesystem::path p(tmp);
+        cout << p.filename().string() << endl;
+        cmd += p.filename().string();
     } else {
         cout << "invalid operation" << endl;
         cout << "help" << endl;
