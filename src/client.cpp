@@ -75,29 +75,7 @@ std::pair<int, std::string> client::build_cmd(int argc, char const* argv[]) {
     cmd += t;
     return std::make_pair<int, std::string>(std::move(op), std::move(cmd));
 }
-void client::get(const std::string filepath) {
-    // io_service io;
-    std::string proto(256, ' ');
-    auto j = sock->read_some(buffer(proto));
-    std::istringstream is(proto);
-    std::string filename;
-    int _blocksize, _blocks, _left;
-    is >> filename >> _blocksize >> _blocks >> _left;
-    std::ofstream out(filepath, std::iostream::out);
-    if (!out.is_open()) {
-        std::cout << "open file error" << std::endl;
-        return;
-    }
-    std::string buf(1024, '\0');
-    for (int i = 0; i < _blocks; ++i) {
-        auto cnt = sock->read_some(buffer(buf));
-        out << buf;
-    }
-    sock->read_some(buffer(buf, _left));
-    for (auto i = 0; i < _left; ++i) out << buf[i];
-
-    out.close();
-}
+void client::get(const std::string filepath) { getfile(sock, filepath); }
 
 client::~client() {
     if (sock->is_open()) {
@@ -105,31 +83,6 @@ client::~client() {
     }
 }
 // filename blocksize blocks leftsize
-void client::send(const std::string filepath) {
-    std::ifstream s(filepath);
-    s.seekg(0, s.end);
-    auto filesize = s.tellg();
-    s.seekg(0, s.beg);
-    char* buf = new char[1024];
-    std::string proto;
-    std::ostringstream os;
-    os << filepath << ' ';
+void client::send(const std::string filepath) { send_file(sock, filepath); }
 
-    int blocks = filesize / blocksize;
-    int left = filesize % blocksize;
-    os << std::to_string(blocksize) << ' ' << std::to_string(blocks) << ' '
-       << std::to_string(left) << endl;
-    proto = os.str();
-    proto += std::string(256 - proto.size(), ' ');
-    sock->send(buffer(proto));
-    // sleep(1);
-    for (int i = 0; i < blocks; i++) {
-        s.read(buf, blocksize);
-        sock->send(buffer(buf, blocksize));
-    }
-    s.read(buf, left);
-    sock->send(buffer(buf, left));
-    s.close();
-    // BOOST_LOG_TRIVIAL(fatal) << "sendfile";
-    delete[] buf;
-}
+void client::getdir(const std::string dirpath) { recvdir(sock, dirpath); }
