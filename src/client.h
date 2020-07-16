@@ -17,8 +17,10 @@ class client {
     ~client();
     void get(const std::string filepath);
     void get_dir(const std::string dirpath);
-    std::pair<int, std::string> build_cmd(int argc, char const* argv[]);
+    std::pair<int, std::string> build_cmd(int argc,
+                                          const std::vector<std::string> argv);
     void send_cmd(const std::string& cmd);
     void send(const std::string filepath);
     void send_dir(const std::string dirpath);
+    void run();
 };

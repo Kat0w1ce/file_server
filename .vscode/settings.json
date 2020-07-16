@@ -94,7 +94,8 @@
         "filesystem": "cpp",
         "strstream": "cpp",
         "cfenv": "cpp",
-        "regex": "cpp"
+        "regex": "cpp",
+        "shared_mutex": "cpp"
     },
     "C_Cpp.default.compilerPath": "/usr/bin/g++",
     "C_Cpp.default.cppStandard": "c++17"

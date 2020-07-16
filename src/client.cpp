@@ -6,6 +6,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <vector>
 
 #include "logger.h"
 #include "util.h"
@@ -24,54 +25,72 @@ void client::send_cmd(const std::string& cmd) {
     sock->send(buffer(cmd));
     // sleep(1);
 }
-std::pair<int, std::string> client::build_cmd(int argc, char const* argv[]) {
+
+void client::run() {
+    std::string line, tmp;
+    std::getline(std::cin, line);
+    std::istringstream is(line);
+    std::vector<std::string> vs;
+    while (is >> tmp) {
+        /* code */
+        vs.emplace_back(tmp);
+    }
+    auto rst = build_cmd(vs.size(), vs);
+    send_cmd(rst.second);
+
+    if (rst.first == 1) get(vs[2]);
+    if (rst.first == 2) send(vs[1]);
+    if (rst.first == 3) get_dir(vs[2]);
+    if (rst.first == 4) send_dir(vs[1]);
+}
+std::pair<int, std::string> client::build_cmd(
+    int argc, const std::vector<std::string> argv) {
     std::string cmd;
     int op = 0;
-    if (argc < 3) {
+    if (argc < 2) {
         return std::make_pair<int, std::string>(std::move(op), std::move(cmd));
     }
 
-    std::string kind(argv[1]);
-    cout << kind << endl;
-    if (kind == std::string("-c")) {
+    if (argv[0] == std::string("-c")) {
         cmd += "0 ";
-        std::string opl(argv[2]);
-        if (argc == 4) {
-            if (opl != std::string("cd")) {
-                cmd.clear();
-                return std::make_pair<int, std::string>(std::move(op),
-                                                        std::move(cmd));
-            } else {
-                cmd += opl;
-                cmd += ' ';
-                cmd += argv[3];
-                cout << cmd << endl;
-            }
-        } else {
-            cmd += op;
+        std::string opl(argv[1]);
+        if (argc == 3) {
+            // if (opl != std::string("cd")) {
+            //     cmd.clear();
+            //     return std::make_pair<int, std::string>(std::move(op),
+            //                                             std::move(cmd));
+            // } else {
+            //     cmd += opl;
+            //     cmd += ' ';
+            //     cmd += argv[2];
+            //     cout << cmd << endl;
+            // }
+            // } else {
+            //     cmd += op;
+            // }
         }
-    } else if (kind == std::string("-g")) {
+    } else if (argv[0] == std::string("-g")) {
         cmd += "1 ";
         op = 1;
-        std::string fn(argv[2]);
+        std::string fn(argv[1]);
         cmd += fn;
-    } else if (kind == std::string("-p")) {
+    } else if (argv[0] == std::string("-p")) {
         cmd += "2 ";
         op = 2;
         char tmp[100];
-        realpath(argv[2], tmp);
+        realpath(argv[1].c_str(), tmp);
         std::filesystem::path p(tmp);
         cmd += p.filename().string();
-    } else if (kind == std::string("-gr")) {
+    } else if (argv[0] == std::string("-gr")) {
         cmd += "3 ";
         op = 3;
-        std::string fn(argv[2]);
+        std::string fn(argv[1]);
         cmd += fn;
-    } else if (kind == std::string("-pr")) {
+    } else if (argv[0] == std::string("-pr")) {
         cmd += "4 ";
         op = 4;
         char tmp[100];
-        realpath(argv[2], tmp);
+        realpath(argv[1].c_str(), tmp);
         std::filesystem::path p(tmp);
         cout << p.filename().string() << endl;
         cmd += p.filename().string();
@@ -83,6 +102,7 @@ std::pair<int, std::string> client::build_cmd(int argc, char const* argv[]) {
     cmd += t;
     return std::make_pair<int, std::string>(std::move(op), std::move(cmd));
 }
+
 void client::get(const std::string filepath) {
     getfile(sock, filepath, std::filesystem::current_path());
 }
