@@ -9,7 +9,7 @@
 #include <sstream>
 
 #include "util.h"
-
+extern fileLogger logger("a.log");
 namespace ftpServer {
 
 using namespace boost::asio;
@@ -35,11 +35,7 @@ void ftpServer::start() {
 void ftpServer::send_dir(const string dirname) {}
 void ftpServer::parser() {}
 
-void ftpServer::init() {
-    boost::log::add_file_log("sample.log");
-    boost::log::core::get()->set_filter(boost::log::trivial::severity >=
-                                        boost::log::trivial::trace);
-}
+void ftpServer::init() {}
 
 int ftpServer::file_handler() {
     io_service ios;
@@ -63,7 +59,7 @@ int ftpServer::file_handler() {
             string fn;
             is >> fn;
             cout << fn << endl;
-            // BOOST_LOG_TRIVIAL(fatal) << "recvfile";
+
             boost::asio::post(thread_pool,
                               std::bind(getfile, socket, fn,
                                         std::filesystem::current_path()));

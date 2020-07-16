@@ -7,11 +7,12 @@
 #include <sstream>
 #include <string>
 
+#include "logger.h"
 #include "util.h"
 using namespace boost::asio;
 using std::cout;
 using std::endl;
-
+extern fileLogger logger("b.log");
 client::client()
     : ios(), sock(std::make_shared<ip::tcp::socket>(ios)), blocksize(1024) {
     endpoint.port(9999);
