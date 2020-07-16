@@ -75,7 +75,9 @@ std::pair<int, std::string> client::build_cmd(int argc, char const* argv[]) {
     cmd += t;
     return std::make_pair<int, std::string>(std::move(op), std::move(cmd));
 }
-void client::get(const std::string filepath) { getfile(sock, filepath); }
+void client::get(const std::string filepath) {
+    getfile(sock, filepath, std::filesystem::current_path());
+}
 
 client::~client() {
     if (sock->is_open()) {

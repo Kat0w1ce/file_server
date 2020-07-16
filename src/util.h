@@ -23,7 +23,10 @@ int cnt_file(const std::filesystem::path& p) {
 }
 using pSocket = std::shared_ptr<boost::asio::ip::tcp::socket>;
 using boost::asio::buffer;
-void getfile(pSocket socket, const std::string& filepath) {
+
+// filename
+void getfile(pSocket socket, const std::string& filepath,
+             std::filesystem::path savepath) {
     std::string proto(256, ' ');
     auto j = socket->read_some(buffer(proto));
     std::istringstream is(proto);
@@ -31,12 +34,9 @@ void getfile(pSocket socket, const std::string& filepath) {
     int _blocksize, _blocks, _left;
     is >> filename >> _blocksize >> _blocks >> _left;
     std::filesystem::path p(filename);
-    // std::filesystem::path fp(filepath);
-    // auto r = p /= fp.filename().string();
-    // cout << r.string() << endl;
-    p /= filepath;
     cout << p.string() << endl;
-    std::ofstream out(p.filename().string(), std::iostream::out);
+    auto rst_path = savepath / p.filename().string();
+    std::ofstream out(rst_path.string(), std::iostream::out);
     if (!out.is_open()) {
         std::cout << "open file error" << std::endl;
         return;
@@ -48,7 +48,6 @@ void getfile(pSocket socket, const std::string& filepath) {
     }
     socket->read_some(buffer(buf, _left));
     for (auto i = 0; i < _left; ++i) out << buf[i];
-    socket->close();
     out.close();
 }
 void send_file(pSocket socket, const std::string& filepath) {
