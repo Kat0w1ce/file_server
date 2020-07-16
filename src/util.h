@@ -10,7 +10,7 @@ using std::cout;
 using std::endl;
 using std::string;
 using std::filesystem::directory_iterator;
-const int blocksize = 1024;
+const int blocksize = 4096;
 
 using pSocket = std::shared_ptr<boost::asio::ip::tcp::socket>;
 using boost::asio::buffer;

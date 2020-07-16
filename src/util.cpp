@@ -21,20 +21,30 @@ void getfile(pSocket socket, const std::string& filepath,
 
     std::filesystem::path rst_path = savepath / p.filename().string();
     if (!filepath.empty()) rst_path = savepath / filepath;
+    logger(Level::Info) << "start to receive " << rst_path.filename().string()
+                        << " blocksize: " << _blocksize
+                        << " blocks: " << _blocks
+                        << " last block size: " << _left;
     std::ofstream out(rst_path.string(), std::iostream::out);
     if (!out.is_open()) {
         logger(Level::Error) << "open file error" << std::endl;
         return;
     }
-    std::string buf(1024, '\0');
+
+    std::string buf(blocksize, '\0');
     for (int i = 0; i < _blocks; ++i) {
+        if (!socket->is_open()) {
+            logger(Level::Error) << "receive" << filepath << " failed at " << i
+                                 << " of " << _blocks;
+            return;
+        }
         auto cnt = socket->read_some(buffer(buf));
         out << buf;
     }
     socket->read_some(buffer(buf, _left));
     for (auto i = 0; i < _left; ++i)
         out << buf[i];
-
+    logger(Level::Info) << "receive " << filepath << "successfully" << endl;
     out.close();
 }
 
@@ -49,7 +59,7 @@ void send_file(pSocket socket, const std::string& filepath) {
     s.seekg(0, s.end);
     auto filesize = s.tellg();
     s.seekg(0, s.beg);
-    char* buf = new char[1024];
+    char* buf = new char[blocksize];
     int blocks = filesize / blocksize;
     int left = filesize % blocksize;
     std::string proto;
@@ -61,12 +71,14 @@ void send_file(pSocket socket, const std::string& filepath) {
     proto = os.str();
     proto += std::string(256 - proto.size(), ' ');
     socket->send(buffer(proto));
-    logger(Level::Info) << "start to send " << filepath;
+    logger(Level::Info) << "start to send " << tmp
+                        << " blocksize: " << blocksize << " blocs " << blocks
+                        << " last block size " << left;
     for (int i = 0; socket->is_open() && i < blocks; i++) {
         s.read(buf, blocksize);
         if (!socket->is_open()) {
             logger(Level::Error)
-                << filepath << " failed at " << i << " of " << blocks;
+                << "send" << filepath << " failed at " << i << " of " << blocks;
             return;
         }
         socket->send(buffer(buf, blocksize));
@@ -75,7 +87,7 @@ void send_file(pSocket socket, const std::string& filepath) {
     socket->send(buffer(buf, left));
 
     s.close();
-
+    logger(Level::Info) << "send " << filepath << " sucessfully";
     delete[] buf;
 }
 
