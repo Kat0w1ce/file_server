@@ -72,6 +72,12 @@ int ftpServer::file_handler() {
             is >> fn;
             // BOOST_LOG_TRIVIAL(fatal) << "recvfile";
             boost::asio::post(thread_pool, std::bind(senddir, socket, fn));
+        } else if (op == "4") {
+            string fn;
+            is >> fn;
+
+            boost::asio::post(thread_pool,
+                              std::bind(recvdir, socket, std::string()));
         }
     }
     return 0;

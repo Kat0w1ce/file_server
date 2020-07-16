@@ -60,13 +60,20 @@ std::pair<int, std::string> client::build_cmd(int argc, char const* argv[]) {
         char tmp[100];
         realpath(argv[2], tmp);
         std::filesystem::path p(tmp);
-        cout << p.filename().string() << endl;
         cmd += p.filename().string();
     } else if (kind == std::string("-gr")) {
         cmd += "3 ";
         op = 3;
         std::string fn(argv[2]);
         cmd += fn;
+    } else if (kind == std::string("-pr")) {
+        cmd += "4 ";
+        op = 4;
+        char tmp[100];
+        realpath(argv[2], tmp);
+        std::filesystem::path p(tmp);
+        cout << p.filename().string() << endl;
+        cmd += p.filename().string();
     } else {
         cout << "invalid operation" << endl;
         cout << "help" << endl;
@@ -87,4 +94,5 @@ client::~client() {
 // filename blocksize blocks leftsize
 void client::send(const std::string filepath) { send_file(sock, filepath); }
 
-void client::getdir(const std::string dirpath) { recvdir(sock, dirpath); }
+void client::get_dir(const std::string dirpath) { recvdir(sock, dirpath); }
+void client::send_dir(const std::string dirpath) { senddir(sock, dirpath); }

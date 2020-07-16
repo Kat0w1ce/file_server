@@ -10,6 +10,12 @@
 #include <boost/log/utility/setup/file.hpp>
 #include <memory>
 #include <string>
+namespace logging = boost::log;
+namespace attrs = boost::log::attributes;
+namespace src = boost::log::sources;
+namespace sinks = boost::log::sinks;
+namespace expr = boost::log::expressions;
+namespace keywords = boost::log::keywords;
 namespace ftpServer {
 using pSocket = std::shared_ptr<boost::asio::ip::tcp::socket>;
 const int blocksize = 1024;
@@ -31,5 +37,6 @@ class ftpServer {
     std::unique_ptr<boost::asio::ip::tcp::acceptor> acceptor;
     boost::asio::ip::tcp::endpoint endpoint;
     void init();
+    // src::severity_logger _logger<>;
 };
 }  // namespace ftpServer
