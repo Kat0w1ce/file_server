@@ -6,6 +6,8 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+
+#include "util.h"
 using namespace boost::asio;
 using std::cout;
 using std::endl;
@@ -60,6 +62,11 @@ std::pair<int, std::string> client::build_cmd(int argc, char const* argv[]) {
         std::filesystem::path p(tmp);
         cout << p.filename().string() << endl;
         cmd += p.filename().string();
+    } else if (kind == std::string("-gr")) {
+        cmd += "3 ";
+        op = 3;
+        std::string fn(argv[2]);
+        cmd += fn;
     } else {
         cout << "invalid operation" << endl;
         cout << "help" << endl;
@@ -122,7 +129,6 @@ void client::send(const std::string filepath) {
     }
     s.read(buf, left);
     sock->send(buffer(buf, left));
-
     s.close();
     // BOOST_LOG_TRIVIAL(fatal) << "sendfile";
     delete[] buf;

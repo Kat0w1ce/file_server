@@ -17,7 +17,7 @@ class ftpServer {
    public:
     void start();
     int file_handler();
-
+    void send_dir(const std::string dirname);
     ftpServer(const std::string ip, const int port);
     ~ftpServer() { acceptor.release(); }
     void run();

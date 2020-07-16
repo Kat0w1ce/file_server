@@ -2,7 +2,6 @@
 
 #include <unistd.h>
 
-#include <boost/format.hpp>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -10,6 +9,7 @@
 #include <sstream>
 
 #include "util.h"
+
 namespace ftpServer {
 
 using namespace boost::asio;
@@ -32,88 +32,13 @@ void ftpServer::start() {
     acceptor.reset(new ip::tcp::acceptor(ios, endpoint));
     init();
 }
-
+void ftpServer::send_dir(const string dirname) {}
 void ftpServer::parser() {}
-void getfile(pSocket socket, const std::string& filepath) {
-    std::string proto(256, ' ');
-    auto j = socket->read_some(buffer(proto));
-    std::istringstream is(proto);
-    string filename;
-    int _blocksize, _blocks, _left;
-    is >> filename >> _blocksize >> _blocks >> _left;
-    filename = "copy_" + filename;
-    std::ofstream out(filepath, std::iostream::out);
-    if (!out.is_open()) {
-        std::cout << "open file error" << std::endl;
-        return;
-    }
-    std::string buf(1024, '\0');
-    for (int i = 0; i < _blocks; ++i) {
-        auto cnt = socket->read_some(buffer(buf));
-        out << buf;
-    }
-    socket->read_some(buffer(buf, _left));
-    for (auto i = 0; i < _left; ++i) out << buf[i];
-    socket->close();
-    out.close();
-}
+
 void ftpServer::init() {
     boost::log::add_file_log("sample.log");
     boost::log::core::get()->set_filter(boost::log::trivial::severity >=
                                         boost::log::trivial::trace);
-}
-
-void senddir(pSocket socket, const std::string& filepath) {
-    char tmp[100];
-    std::ostringstream os;
-    realpath(filepath.c_str(), tmp);
-    std::filesystem::path p(tmp);
-    if (!std::filesystem::is_directory(p)) {
-        cout << tmp << ": Not a dir" << endl;
-        return;
-    }
-    int cnt = cnt_file(p);
-    os << p.filename().string() << ' ' << cnt;
-    string proto(os.str());
-    proto += string(64 - proto.size(), '\0');
-    std::filesystem::directory_iterator ditor(p);
-    const std::filesystem::directory_iterator dend;
-}
-void sendfile(pSocket socket, const std::string& filepath) {
-    char tmp[100];
-    realpath(filepath.c_str(), tmp);
-    ifstream s(tmp);
-    if (!s.is_open()) {
-        cout << "can't open " << tmp << endl;
-        return;
-    }
-    s.seekg(0, s.end);
-    auto filesize = s.tellg();
-    s.seekg(0, s.beg);
-    char* buf = new char[1024];
-    int blocks = filesize / blocksize;
-    int left = filesize % blocksize;
-    std::string proto;
-    std::ostringstream os;
-    os << filepath << ' ';
-
-    os << std::to_string(blocksize) << ' ' << std::to_string(blocks) << ' '
-       << std::to_string(left) << endl;
-    proto = os.str();
-    proto += std::string(256 - proto.size(), ' ');
-    socket->send(buffer(proto));
-
-    for (int i = 0; i < blocks; i++) {
-        s.read(buf, blocksize);
-        socket->send(buffer(buf, blocksize));
-    }
-    s.read(buf, left);
-    socket->send(buffer(buf, left));
-
-    // socket->close();
-    s.close();
-
-    delete[] buf;
 }
 
 int ftpServer::file_handler() {
@@ -133,7 +58,7 @@ int ftpServer::file_handler() {
             string fn;
             is >> fn;
             BOOST_LOG_TRIVIAL(fatal) << "sendfile";
-            boost::asio::post(thread_pool, std::bind(sendfile, socket, fn));
+            boost::asio::post(thread_pool, std::bind(send_file, socket, fn));
         } else if (op == "2") {
             string fn;
             is >> fn;
@@ -141,6 +66,11 @@ int ftpServer::file_handler() {
             BOOST_LOG_TRIVIAL(fatal) << "recvfile";
             fn = string("copy_") + fn;
             boost::asio::post(thread_pool, std::bind(getfile, socket, fn));
+        } else if (op == "3") {
+            string fn;
+            is >> fn;
+            BOOST_LOG_TRIVIAL(fatal) << "recvfile";
+            boost::asio::post(thread_pool, std::bind(senddir, socket, fn));
         }
     }
     return 0;
