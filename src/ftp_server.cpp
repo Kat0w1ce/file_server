@@ -57,20 +57,20 @@ int ftpServer::file_handler() {
         if (op == "1") {
             string fn;
             is >> fn;
-            BOOST_LOG_TRIVIAL(fatal) << "sendfile";
+            // BOOST_LOG_TRIVIAL(fatal) << "sendfile";
             boost::asio::post(thread_pool, std::bind(send_file, socket, fn));
         } else if (op == "2") {
             string fn;
             is >> fn;
             cout << fn << endl;
-            BOOST_LOG_TRIVIAL(fatal) << "recvfile";
+            // BOOST_LOG_TRIVIAL(fatal) << "recvfile";
             boost::asio::post(thread_pool,
                               std::bind(getfile, socket, fn,
                                         std::filesystem::current_path()));
         } else if (op == "3") {
             string fn;
             is >> fn;
-            BOOST_LOG_TRIVIAL(fatal) << "recvfile";
+            // BOOST_LOG_TRIVIAL(fatal) << "recvfile";
             boost::asio::post(thread_pool, std::bind(senddir, socket, fn));
         }
     }

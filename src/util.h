@@ -34,7 +34,6 @@ void getfile(pSocket socket, const std::string& filepath,
     int _blocksize, _blocks, _left;
     is >> filename >> _blocksize >> _blocks >> _left;
     std::filesystem::path p(filename);
-    cout << p.string() << endl;
     auto rst_path = savepath / p.filename().string();
     std::ofstream out(rst_path.string(), std::iostream::out);
     if (!out.is_open()) {
@@ -103,7 +102,8 @@ void senddir(pSocket socket, const std::string& filepath) {
     std::filesystem::directory_iterator ditor(p);
     const std::filesystem::directory_iterator dend;
     while (socket->is_open() && ditor != dend) {
-        send_file(socket, ditor->path().filename().string());
+        // cout << ditor->path().string();
+        send_file(socket, ditor->path().string());
         ++ditor;
     }
 }
@@ -115,8 +115,12 @@ void recvdir(pSocket socket, const std::string& filename) {
     string dirname;
     int cnt;
     is >> dirname >> cnt;
-    cout << dirname << ' ' << cnt << endl;
+    // cout << dirname << ' ' << cnt << endl;
 
     std::filesystem::create_directory(filename);
+    auto sp = std::filesystem::current_path() / filename;
+    for (int i = 0; i < cnt; i++) {
+        getfile(socket, "rust", sp);
+    }
     // std::filesystem::
 }
