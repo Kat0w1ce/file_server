@@ -1,13 +1,14 @@
 #include <unistd.h>
 
 #include <boost/asio.hpp>
+#include <memory>
 #include <string>
 class client {
    private:
     //   boost::asio::io_service io_service;
     boost::asio::io_service ios;
     boost::asio::ip::tcp::endpoint endpoint;
-    boost::asio::ip::tcp::socket sock;
+    std::shared_ptr<boost::asio::ip::tcp::socket> sock;
     const int blocksize;
 
    public:

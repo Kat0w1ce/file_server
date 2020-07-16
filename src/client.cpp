@@ -10,14 +10,15 @@ using namespace boost::asio;
 using std::cout;
 using std::endl;
 
-client::client() : ios(), sock(ios), blocksize(1024) {
+client::client()
+    : ios(), sock(std::make_shared<ip::tcp::socket>(ios)), blocksize(1024) {
     endpoint.port(9999);
     endpoint.address().from_string("127.0.0.1");
 }
 
 void client::send_cmd(const std::string& cmd) {
-    sock.connect(endpoint);
-    sock.send(buffer(cmd));
+    sock->connect(endpoint);
+    sock->send(buffer(cmd));
     // sleep(1);
 }
 std::pair<int, std::string> client::build_cmd(int argc, char const* argv[]) {
@@ -70,7 +71,7 @@ std::pair<int, std::string> client::build_cmd(int argc, char const* argv[]) {
 void client::get(const std::string filepath) {
     // io_service io;
     std::string proto(256, ' ');
-    auto j = sock.read_some(buffer(proto));
+    auto j = sock->read_some(buffer(proto));
     std::istringstream is(proto);
     std::string filename;
     int _blocksize, _blocks, _left;
@@ -82,18 +83,18 @@ void client::get(const std::string filepath) {
     }
     std::string buf(1024, '\0');
     for (int i = 0; i < _blocks; ++i) {
-        auto cnt = sock.read_some(buffer(buf));
+        auto cnt = sock->read_some(buffer(buf));
         out << buf;
     }
-    sock.read_some(buffer(buf, _left));
+    sock->read_some(buffer(buf, _left));
     for (auto i = 0; i < _left; ++i) out << buf[i];
 
     out.close();
 }
 
 client::~client() {
-    if (sock.is_open()) {
-        sock.close();
+    if (sock->is_open()) {
+        sock->close();
     }
 }
 // filename blocksize blocks leftsize
@@ -113,14 +114,14 @@ void client::send(const std::string filepath) {
        << std::to_string(left) << endl;
     proto = os.str();
     proto += std::string(256 - proto.size(), ' ');
-    sock.send(buffer(proto));
+    sock->send(buffer(proto));
     // sleep(1);
     for (int i = 0; i < blocks; i++) {
         s.read(buf, blocksize);
-        sock.send(buffer(buf, blocksize));
+        sock->send(buffer(buf, blocksize));
     }
     s.read(buf, left);
-    sock.send(buffer(buf, left));
+    sock->send(buffer(buf, left));
 
     s.close();
     // BOOST_LOG_TRIVIAL(fatal) << "sendfile";

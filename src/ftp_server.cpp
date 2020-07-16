@@ -3,10 +3,13 @@
 #include <unistd.h>
 
 #include <boost/format.hpp>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <memory>
 #include <sstream>
+
+#include "util.h"
 namespace ftpServer {
 
 using namespace boost::asio;
@@ -39,7 +42,7 @@ void getfile(pSocket socket, const std::string& filepath) {
     int _blocksize, _blocks, _left;
     is >> filename >> _blocksize >> _blocks >> _left;
     filename = "copy_" + filename;
-    std::ofstream out(filename, std::iostream::out);
+    std::ofstream out(filepath, std::iostream::out);
     if (!out.is_open()) {
         std::cout << "open file error" << std::endl;
         return;
@@ -58,6 +61,23 @@ void ftpServer::init() {
     boost::log::add_file_log("sample.log");
     boost::log::core::get()->set_filter(boost::log::trivial::severity >=
                                         boost::log::trivial::trace);
+}
+
+void senddir(pSocket socket, const std::string& filepath) {
+    char tmp[100];
+    std::ostringstream os;
+    realpath(filepath.c_str(), tmp);
+    std::filesystem::path p(tmp);
+    if (!std::filesystem::is_directory(p)) {
+        cout << tmp << ": Not a dir" << endl;
+        return;
+    }
+    int cnt = cnt_file(p);
+    os << p.filename().string() << ' ' << cnt;
+    string proto(os.str());
+    proto += string(64 - proto.size(), '\0');
+    std::filesystem::directory_iterator ditor(p);
+    const std::filesystem::directory_iterator dend;
 }
 void sendfile(pSocket socket, const std::string& filepath) {
     char tmp[100];
@@ -90,12 +110,12 @@ void sendfile(pSocket socket, const std::string& filepath) {
     s.read(buf, left);
     socket->send(buffer(buf, left));
 
-    sleep(3);
-    socket->close();
+    // socket->close();
     s.close();
-    BOOST_LOG_TRIVIAL(fatal) << "sendfile";
+
     delete[] buf;
 }
+
 int ftpServer::file_handler() {
     io_service ios;
 
@@ -112,11 +132,13 @@ int ftpServer::file_handler() {
         if (op == "1") {
             string fn;
             is >> fn;
+            BOOST_LOG_TRIVIAL(fatal) << "sendfile";
             boost::asio::post(thread_pool, std::bind(sendfile, socket, fn));
         } else if (op == "2") {
             string fn;
             is >> fn;
             cout << fn << endl;
+            BOOST_LOG_TRIVIAL(fatal) << "recvfile";
             fn = string("copy_") + fn;
             boost::asio::post(thread_pool, std::bind(getfile, socket, fn));
         }
