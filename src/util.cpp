@@ -3,12 +3,9 @@
 #include "logger.h"
 int cnt_file(const std::filesystem::path& p) {
     auto ditor = directory_iterator(p);
-    int cnt;
-    const directory_iterator end;
-    while (ditor != end) {
-        ++ditor;
+    int cnt = 0;
+    for (auto& p : std::filesystem::directory_iterator(p))
         cnt++;
-    }
     return cnt;
 }
 
@@ -21,7 +18,9 @@ void getfile(pSocket socket, const std::string& filepath,
     int _blocksize, _blocks, _left;
     is >> filename >> _blocksize >> _blocks >> _left;
     std::filesystem::path p(filename);
-    auto rst_path = savepath / p.filename().string();
+
+    std::filesystem::path rst_path = savepath / p.filename().string();
+    if (!filepath.empty()) rst_path = savepath / filepath;
     std::ofstream out(rst_path.string(), std::iostream::out);
     if (!out.is_open()) {
         logger(Level::Error) << "open file error" << std::endl;
@@ -33,9 +32,9 @@ void getfile(pSocket socket, const std::string& filepath,
         out << buf;
     }
     socket->read_some(buffer(buf, _left));
-    for (auto i = 0; i < _left; ++i) out << buf[i];
-    if (!filepath.empty())
-        std::filesystem::rename(rst_path, savepath / filepath);
+    for (auto i = 0; i < _left; ++i)
+        out << buf[i];
+
     out.close();
 }
 
@@ -62,7 +61,7 @@ void send_file(pSocket socket, const std::string& filepath) {
     proto = os.str();
     proto += std::string(256 - proto.size(), ' ');
     socket->send(buffer(proto));
-    // logger()
+    logger(Level::Info) << "start to send " << filepath;
     for (int i = 0; socket->is_open() && i < blocks; i++) {
         s.read(buf, blocksize);
         if (!socket->is_open()) {
@@ -86,10 +85,11 @@ void senddir(pSocket socket, const std::string& filepath) {
     realpath(filepath.c_str(), tmp);
     std::filesystem::path p(tmp);
     if (!std::filesystem::is_directory(p)) {
-        std::cout << tmp << ": Not a dir" << std::endl;
+        logger(Level::Error) << tmp << ": Not a dir" << std::endl;
         return;
     }
     int cnt = cnt_file(p);
+    // cout << "cnt: " << cnt << endl;
     os << p.filename().string() << ' ' << cnt;
     string proto(os.str());
     proto += string(64 - proto.size(), '\0');
@@ -97,7 +97,7 @@ void senddir(pSocket socket, const std::string& filepath) {
     std::filesystem::directory_iterator ditor(p);
     const std::filesystem::directory_iterator dend;
     while (socket->is_open() && ditor != dend) {
-        cout << ditor->path().string();
+        // cout << ditor->path().string();
         send_file(socket, ditor->path().string());
         ++ditor;
     }
@@ -110,7 +110,7 @@ void recvdir(pSocket socket, const std::string& filename) {
     string dirname;
     int cnt;
     is >> dirname >> cnt;
-    cout << dirname << ' ' << cnt << endl;
+    // cout << dirname << ' ' << cnt << endl;
     string rst = filename;
     if (filename.empty()) rst = dirname;
     std::filesystem::create_directory(rst);
