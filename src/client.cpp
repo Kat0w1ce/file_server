@@ -69,25 +69,33 @@ std::pair<int, std::string> client::build_cmd(int argc, char const* argv[]) {
 }
 void client::get(const std::string filepath) {
     // io_service io;
+    std::string proto(256, ' ');
+    auto j = sock.read_some(buffer(proto));
+    std::istringstream is(proto);
+    std::string filename;
+    int _blocksize, _blocks, _left;
+    is >> filename >> _blocksize >> _blocks >> _left;
     std::ofstream out(filepath, std::iostream::out);
     if (!out.is_open()) {
         std::cout << "open file error" << std::endl;
         return;
     }
     std::string buf(1024, '\0');
-
-    while (true) {
+    for (int i = 0; i < _blocks; ++i) {
         auto cnt = sock.read_some(buffer(buf));
-        if (cnt == 1024) out << buf;
-        if (cnt != 1024) {
-            for (auto i = 0; i < cnt; ++i) out << buf[i];
-            break;
-        }
+        out << buf;
     }
-    sock.close();
+    sock.read_some(buffer(buf, _left));
+    for (auto i = 0; i < _left; ++i) out << buf[i];
+
     out.close();
 }
 
+client::~client() {
+    if (sock.is_open()) {
+        sock.close();
+    }
+}
 // filename blocksize blocks leftsize
 void client::send(const std::string filepath) {
     std::ifstream s(filepath);
@@ -114,8 +122,6 @@ void client::send(const std::string filepath) {
     s.read(buf, left);
     sock.send(buffer(buf, left));
 
-    sleep(3);
-    sock.close();
     s.close();
     // BOOST_LOG_TRIVIAL(fatal) << "sendfile";
     delete[] buf;

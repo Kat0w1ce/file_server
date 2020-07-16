@@ -13,7 +13,7 @@ class client {
    public:
     //   client(std::string ip,int port);
     client();
-    ~client(){};
+    ~client();
     void get(const std::string filepath);
     std::pair<int, std::string> build_cmd(int argc, char const* argv[]);
     void send_cmd(const std::string& cmd);

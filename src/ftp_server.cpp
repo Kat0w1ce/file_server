@@ -32,28 +32,25 @@ void ftpServer::start() {
 
 void ftpServer::parser() {}
 void getfile(pSocket socket, const std::string& filepath) {
-    std::ofstream out(filepath, std::iostream::out);
     std::string proto(256, ' ');
     auto j = socket->read_some(buffer(proto));
     std::istringstream is(proto);
     string filename;
-    int bls, blz, l;
-    is >> filename >> blz >> bls >> l;
-    cout << filename << blz << bls << l << endl;
+    int _blocksize, _blocks, _left;
+    is >> filename >> _blocksize >> _blocks >> _left;
+    filename = "copy_" + filename;
+    std::ofstream out(filename, std::iostream::out);
     if (!out.is_open()) {
         std::cout << "open file error" << std::endl;
         return;
     }
     std::string buf(1024, '\0');
-
-    while (true) {
+    for (int i = 0; i < _blocks; ++i) {
         auto cnt = socket->read_some(buffer(buf));
-        if (cnt == 1024) out << buf;
-        if (cnt != 1024) {
-            for (auto i = 0; i < cnt; ++i) out << buf[i];
-            break;
-        }
+        out << buf;
     }
+    socket->read_some(buffer(buf, _left));
+    for (auto i = 0; i < _left; ++i) out << buf[i];
     socket->close();
     out.close();
 }
@@ -76,8 +73,16 @@ void sendfile(pSocket socket, const std::string& filepath) {
     char* buf = new char[1024];
     int blocks = filesize / blocksize;
     int left = filesize % blocksize;
-    cout << blocks << " " << left << endl;
-    ;
+    std::string proto;
+    std::ostringstream os;
+    os << filepath << ' ';
+
+    os << std::to_string(blocksize) << ' ' << std::to_string(blocks) << ' '
+       << std::to_string(left) << endl;
+    proto = os.str();
+    proto += std::string(256 - proto.size(), ' ');
+    socket->send(buffer(proto));
+
     for (int i = 0; i < blocks; i++) {
         s.read(buf, blocksize);
         socket->send(buffer(buf, blocksize));
