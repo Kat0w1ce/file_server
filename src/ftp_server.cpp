@@ -96,7 +96,7 @@ bool ftpServer::check(pSocket socket) {
     std::string _usrname, _pwd;
     std::string ss;
     is >> _usrname >> _pwd >> ss;
-    std::ifstream s("user.conf", O_RDONLY);
+    std::ifstream s("user.conf", std::ios::in);
     while (std::getline(s, tmp)) {
         /* code */
         std::istringstream iss(tmp);
