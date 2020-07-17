@@ -17,6 +17,7 @@ class ftpServer {
     ~ftpServer() { acceptor.release(); }
     void run();
     void parser();
+    bool check(pSocket socket);
 
    private:
     const std::string localhost;

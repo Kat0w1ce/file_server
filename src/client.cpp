@@ -14,19 +14,42 @@ using namespace boost::asio;
 using std::cout;
 using std::endl;
 extern fileLogger logger("b.log");
-client::client()
-    : ios(), sock(std::make_shared<ip::tcp::socket>(ios)), blocksize(1024) {
-    endpoint.port(9999);
-    endpoint.address().from_string("127.0.0.1");
+client::client(std::string _ip, int _port, const std::string _username,
+               std::string _pwd)
+    : ios(),
+      username(_username),
+      pwd(_pwd),
+      sock(std::make_shared<ip::tcp::socket>(ios)),
+      blocksize(1024),
+      ip(_ip),
+      port(_port) {
+    endpoint.port(_port);
+    endpoint.address().from_string(ip);
 }
 
-void client::send_cmd(const std::string& cmd) {
+bool client::login() {
     sock->connect(endpoint);
+    string msg(username);
+    msg += ' ';
+    msg += pwd;
+    msg += string(64 - msg.size(), ' ');
+    sock->send(buffer(msg));
+    sock->read_some(buffer(msg));
+    cout << msg[0] << endl;
+    return msg[0] == '1';
+}
+void client::send_cmd(const std::string& cmd) {
     sock->send(buffer(cmd));
+    cout << "a" << endl;
     // sleep(1);
 }
 
 void client::run() {
+    if (!login()) {
+        cout << "username or password is incorrect" << endl;
+        return;
+    }
+    cout << "login successfully" << endl;
     std::string line, tmp;
     std::getline(std::cin, line);
     std::istringstream is(line);

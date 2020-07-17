@@ -46,6 +46,17 @@ int ftpServer::file_handler() {
             std::make_shared<ip::tcp::socket>(ip::tcp::socket(ios));
         acceptor->accept(*socket);
         std::string cmd_buf(64, '\0');
+        if (check(socket)) {
+            cout << "correct" << endl;
+            cmd_buf[0] = '1';
+            socket->send(buffer(cmd_buf));
+        } else {
+            cmd_buf[0] = '0';
+            socket->send(buffer(cmd_buf));
+            socket->close();
+            continue;
+        }
+
         socket->read_some(buffer(cmd_buf));
         std::istringstream is(cmd_buf);
         string op;
@@ -66,7 +77,6 @@ int ftpServer::file_handler() {
         } else if (op == "3") {
             string fn;
             is >> fn;
-            // BOOST_LOG_TRIVIAL(fatal) << "recvfile";
             boost::asio::post(thread_pool, std::bind(senddir, socket, fn));
         } else if (op == "4") {
             string fn;
@@ -77,5 +87,27 @@ int ftpServer::file_handler() {
         }
     }
     return 0;
+}
+bool ftpServer::check(pSocket socket) {
+    string msg(64, '\0');
+    string tmp;
+    socket->read_some(buffer(msg));
+    std::istringstream is(msg);
+    std::string _usrname, _pwd;
+    std::string ss;
+    is >> _usrname >> _pwd >> ss;
+    std::ifstream s("user.conf", O_RDONLY);
+    while (std::getline(s, tmp)) {
+        /* code */
+        std::istringstream iss(tmp);
+        string usrname;
+        string pwd;
+        iss >> usrname >> pwd;
+        if (_usrname == usrname && _pwd == pwd) {
+            logger(Level::Info) << "User " << _usrname << " log in.";
+            return true;
+        }
+    }
+    return false;
 }
 }  // namespace ftpServer
