@@ -32,20 +32,21 @@ bool client::login() {
     sock->connect(endpoint);
     boost::asio::ip::tcp::no_delay option(true);
     sock->set_option(option);
+
     string msg(username);
 
     msg += ' ';
     msg += pwd;
-    msg += string(256 - msg.size(), ' ');
+    msg += string(64 - msg.size(), ' ');
     sock->send(buffer(msg));
-    sock->read_some(buffer(msg));
-
+    sock->read_some(buffer(msg, 64));
+    cout << "login msg " << msg << endl;
     cout << msg[0] << endl;
     return msg[0] == '1';
 }
 void client::send_cmd(const std::string& cmd) {
-    sock->send(buffer(cmd, 256));
-    cout << "a" << endl;
+    cout << "client cmd: " << cmd << endl;
+    sock->send(buffer(cmd, 64));
     // sleep(1);
 }
 
@@ -64,8 +65,8 @@ void client::run() {
         vs.emplace_back(tmp);
     }
     auto rst = build_cmd(vs.size(), vs);
+    cout << rst.second << ' ' << rst.second.size() << endl;
     send_cmd(rst.second);
-    cout << "ggg" << '\n';
     if (rst.first == 1) get(vs[2]);
     if (rst.first == 2) send(vs[1]);
     if (rst.first == 3) get_dir(vs[2]);
@@ -126,7 +127,7 @@ std::pair<int, std::string> client::build_cmd(
         cout << "invalid operation" << endl;
         cout << "help" << endl;
     }
-    std::string t(256 - cmd.size(), '\0');
+    std::string t(64 - cmd.size(), '\0');
     cmd += t;
     return std::make_pair<int, std::string>(std::move(op), std::move(cmd));
 }

@@ -11,8 +11,8 @@ int cnt_file(const std::filesystem::path& p) {
 
 void getfile(pSocket socket, const std::string& filepath,
              std::filesystem::path savepath) {
-    std::string proto(256, '\0');
-    auto j = socket->read_some(buffer(proto));
+    std::string proto(128, ' ');
+    boost::asio::read(*socket, buffer(proto, 64));
     cout << proto << endl;
     std::istringstream is(proto);
     string filename;
@@ -54,6 +54,9 @@ void getfile(pSocket socket, const std::string& filepath,
 
 void send_file(pSocket socket, const std::string& filepath) {
     char tmp[100];
+    // cout << "socket option: " << socket->get_option() << endl;
+    boost::asio::ip::tcp::no_delay option(true);
+    socket->set_option(option);
     realpath(filepath.c_str(), tmp);
     cout << "send " << tmp << endl;
     std::ifstream s(tmp);
@@ -67,15 +70,15 @@ void send_file(pSocket socket, const std::string& filepath) {
     char* buf = new char[blocksize];
     int blocks = filesize / blocksize;
     int left = filesize % blocksize;
-    std::string proto;
     std::ostringstream os;
     os << filepath << ' ';
 
-    os << std::to_string(blocksize) << ' ' << std::to_string(blocks) << ' '
-       << std::to_string(left) << endl;
-    proto = os.str();
-    proto += std::string(256 - proto.size(), ' ');
-    socket->send(buffer(proto));
+    os << blocksize << ' ' << blocks << ' ' << left << endl;
+    std::string proto(os.str());
+    for (int i = proto.size(); i <= 128; ++i)
+        proto.push_back('\0');
+    cout << proto << endl;
+    socket->write_some(buffer(proto, 128));
     logger(Level::Info) << "start to send " << tmp
                         << " blocksize: " << blocksize << " blocs " << blocks
                         << " last block size " << left;
@@ -111,7 +114,7 @@ void senddir(pSocket socket, const std::string& filepath) {
     // cout << "cnt: " << cnt << endl;
     os << p.filename().string() << ' ' << cnt;
     string proto(os.str());
-    proto += string(256 - proto.size(), ' ');
+    proto += string(64 - proto.size(), ' ');
     socket->send(buffer(proto));
     std::filesystem::directory_iterator ditor(p);
     const std::filesystem::directory_iterator dend;
@@ -123,7 +126,7 @@ void senddir(pSocket socket, const std::string& filepath) {
 }
 
 void recvdir(pSocket socket, const std::string& filename) {
-    string proto(256, ' ');
+    string proto(64, ' ');
     socket->read_some(buffer(proto));
     std::istringstream is(proto);
     string dirname;
