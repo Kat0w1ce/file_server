@@ -11,8 +11,9 @@ int cnt_file(const std::filesystem::path& p) {
 
 void getfile(pSocket socket, const std::string& filepath,
              std::filesystem::path savepath) {
-    std::string proto(256, ' ');
+    std::string proto(256, '\0');
     auto j = socket->read_some(buffer(proto));
+    cout << proto << endl;
     std::istringstream is(proto);
     string filename;
     int _blocksize, _blocks, _left;
@@ -110,7 +111,7 @@ void senddir(pSocket socket, const std::string& filepath) {
     // cout << "cnt: " << cnt << endl;
     os << p.filename().string() << ' ' << cnt;
     string proto(os.str());
-    proto += string(64 - proto.size(), ' ');
+    proto += string(256 - proto.size(), ' ');
     socket->send(buffer(proto));
     std::filesystem::directory_iterator ditor(p);
     const std::filesystem::directory_iterator dend;

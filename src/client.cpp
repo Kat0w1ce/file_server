@@ -36,7 +36,7 @@ bool client::login() {
 
     msg += ' ';
     msg += pwd;
-    msg += string(64 - msg.size(), ' ');
+    msg += string(256 - msg.size(), ' ');
     sock->send(buffer(msg));
     sock->read_some(buffer(msg));
 
@@ -44,7 +44,7 @@ bool client::login() {
     return msg[0] == '1';
 }
 void client::send_cmd(const std::string& cmd) {
-    sock->send(buffer(cmd));
+    sock->send(buffer(cmd, 256));
     cout << "a" << endl;
     // sleep(1);
 }
@@ -65,7 +65,7 @@ void client::run() {
     }
     auto rst = build_cmd(vs.size(), vs);
     send_cmd(rst.second);
-
+    cout << "ggg" << '\n';
     if (rst.first == 1) get(vs[2]);
     if (rst.first == 2) send(vs[1]);
     if (rst.first == 3) get_dir(vs[2]);
@@ -126,7 +126,7 @@ std::pair<int, std::string> client::build_cmd(
         cout << "invalid operation" << endl;
         cout << "help" << endl;
     }
-    std::string t(64 - cmd.size(), '\0');
+    std::string t(256 - cmd.size(), '\0');
     cmd += t;
     return std::make_pair<int, std::string>(std::move(op), std::move(cmd));
 }
