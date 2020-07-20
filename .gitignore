@@ -1,3 +1,4 @@
 build/
 test_*
 *.log
+data/

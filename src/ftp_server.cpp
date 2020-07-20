@@ -44,6 +44,8 @@ int ftpServer::file_handler() {
         /* code */
         pSocket socket =
             std::make_shared<ip::tcp::socket>(ip::tcp::socket(ios));
+        boost::asio::ip::tcp::no_delay option(true);
+        socket->set_option(option);
         acceptor->accept(*socket);
         std::string cmd_buf(64, '\0');
         if (check(socket)) {
@@ -96,7 +98,7 @@ bool ftpServer::check(pSocket socket) {
     std::string _usrname, _pwd;
     std::string ss;
     is >> _usrname >> _pwd >> ss;
-    std::ifstream s("user.conf", O_RDONLY);
+    std::ifstream s("user.conf", std::ios::in);
     while (std::getline(s, tmp)) {
         /* code */
         std::istringstream iss(tmp);

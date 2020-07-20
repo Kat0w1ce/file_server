@@ -24,17 +24,22 @@ client::client(std::string _ip, int _port, const std::string _username,
       ip(_ip),
       port(_port) {
     endpoint.port(_port);
-    endpoint.address().from_string(ip);
+    endpoint.address(boost::asio::ip::make_address_v4(_ip));
 }
 
 bool client::login() {
+    cout << endpoint.address() << "  " << endpoint.port() << endl;
     sock->connect(endpoint);
+    boost::asio::ip::tcp::no_delay option(true);
+    sock->set_option(option);
     string msg(username);
+
     msg += ' ';
     msg += pwd;
     msg += string(64 - msg.size(), ' ');
     sock->send(buffer(msg));
     sock->read_some(buffer(msg));
+
     cout << msg[0] << endl;
     return msg[0] == '1';
 }

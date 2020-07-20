@@ -41,16 +41,20 @@ void getfile(pSocket socket, const std::string& filepath,
         auto cnt = socket->read_some(buffer(buf));
         out << buf;
     }
-    socket->read_some(buffer(buf, _left));
-    for (auto i = 0; i < _left; ++i)
-        out << buf[i];
+    if (_left != 0 && socket->is_open()) {
+        socket->read_some(buffer(buf, _left));
+        for (auto i = 0; i < _left; ++i)
+            out << buf[i];
+    }
     logger(Level::Info) << "receive " << filepath << "successfully" << endl;
     out.close();
+    sleep(1);
 }
 
 void send_file(pSocket socket, const std::string& filepath) {
     char tmp[100];
     realpath(filepath.c_str(), tmp);
+    cout << "send " << tmp << endl;
     std::ifstream s(tmp);
     if (!s.is_open()) {
         logger(Level::Error) << "can't open " << tmp << endl;
@@ -83,12 +87,14 @@ void send_file(pSocket socket, const std::string& filepath) {
         }
         socket->send(buffer(buf, blocksize));
     }
-    s.read(buf, left);
-    socket->send(buffer(buf, left));
-
+    if (left != 0) {
+        s.read(buf, left);
+        socket->send(buffer(buf, left));
+    }
     s.close();
     logger(Level::Info) << "send " << filepath << " sucessfully";
     delete[] buf;
+    sleep(1);
 }
 
 void senddir(pSocket socket, const std::string& filepath) {
@@ -104,7 +110,7 @@ void senddir(pSocket socket, const std::string& filepath) {
     // cout << "cnt: " << cnt << endl;
     os << p.filename().string() << ' ' << cnt;
     string proto(os.str());
-    proto += string(64 - proto.size(), '\0');
+    proto += string(64 - proto.size(), ' ');
     socket->send(buffer(proto));
     std::filesystem::directory_iterator ditor(p);
     const std::filesystem::directory_iterator dend;
@@ -116,7 +122,7 @@ void senddir(pSocket socket, const std::string& filepath) {
 }
 
 void recvdir(pSocket socket, const std::string& filename) {
-    string proto(64, '\0');
+    string proto(256, ' ');
     socket->read_some(buffer(proto));
     std::istringstream is(proto);
     string dirname;
