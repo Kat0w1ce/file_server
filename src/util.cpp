@@ -34,18 +34,44 @@ void getfile(pSocket socket, const std::string& filepath,
         logger(Level::Error) << "open file error" << std::endl;
         return;
     }
-
-    std::string buf(blocksize, '\0');
-    for (int i = 0; i < _blocks; ++i) {
+    std::string exp("expect ");
+    std::string buf(blocksize + 8, '\0');
+    int index = 0;
+    while (index < _blocks) {
+        /* code */
         if (!socket->is_open()) {
-            logger(Level::Error) << "receive" << filepath << " failed at " << i
-                                 << " of " << _blocks;
+            logger(Level::Error) << "receive" << filepath << " failed at "
+                                 << index << " of " << _blocks;
             return;
         }
-        cout << "block :" << i << endl;
-        auto cnt = socket->read_some(buffer(buf));
-        out << buf;
+        string cmd = exp + std::to_string(index);
+        cmd.resize(32);
+        // send "expect index"
+        socket->send(buffer(cmd));
+        usleep(50);
+        socket->read_some(buffer(buf));
+
+        int i = std::stoi(buf.substr(0, 8));
+        if (i == index) {
+            cout << "get " << index << endl;
+            out.write(&buf[8], blocksize);
+            index++;
+        }
+        usleep(50);
     }
+
+    // for (int i = 0; i < _blocks; ++i) {
+    //     if (!socket->is_open()) {
+    //         logger(Level::Error) << "receive" << filepath << " failed at
+    //         " <<
+    //         i
+    //                              << " of " << _blocks;
+    //         return;
+    //     }
+    //     cout << "block :" << i << endl;
+    //     auto cnt = socket->read_some(buffer(buf));
+    //     out << buf;
+    // }
     if (_left != 0 && socket->is_open()) {
         cout << "read left" << endl;
         socket->read_some(buffer(buf, _left));
@@ -88,15 +114,44 @@ void send_file(pSocket socket, const std::string& filepath) {
     logger(Level::Info) << "start to send " << tmp
                         << " blocksize: " << blocksize << " blocs " << blocks
                         << " last block size " << left;
-    for (int i = 0; socket->is_open() && i < blocks; i++) {
-        s.read(const_cast<char*>(buf.c_str()), blocksize);
+    int index = 0;
+    std::string cmd_buf(32, ' ');
+    string last_block;
+    while (index < blocks) {
         if (!socket->is_open()) {
-            logger(Level::Error)
-                << "send" << filepath << " failed at " << i << " of " << blocks;
+            logger(Level::Error) << "send" << filepath << " failed at " << index
+                                 << " of " << blocks;
             return;
         }
-        socket->send(buffer(buf, blocksize));
+        socket->read_some(buffer(cmd_buf));
+        usleep(50);
+        std::istringstream iss(cmd_buf);
+        string tmp;
+        int i;
+        iss >> tmp >> i;
+        string ss(std::to_string(i));
+        if (i == index) {
+            ss.resize(8 + blocksize);
+            s.read(&ss[8], blocksize);
+            socket->send(buffer(ss));
+            last_block = ss;
+            index++;
+        } else {
+            socket->send(buffer(last_block));
+        }
+        usleep(50);
     }
+
+    // for (int i = 0; socket->is_open() && i < blocks; i++) {
+    //     s.read(const_cast<char*>(buf.c_str()), blocksize);
+    //     if (!socket->is_open()) {
+    //         logger(Level::Error)
+    //             << "send" << filepath << " failed at " << i << " of " <<
+    //             blocks;
+    //         return;
+    //     }
+    //     socket->send(buffer(buf, blocksize));
+    // }
     if (left != 0) {
         s.read(const_cast<char*>(buf.c_str()), left);
         socket->send(buffer(buf, left));
