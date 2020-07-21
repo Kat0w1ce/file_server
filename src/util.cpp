@@ -11,8 +11,11 @@ int cnt_file(const std::filesystem::path& p) {
 
 void getfile(pSocket socket, const std::string& filepath,
              std::filesystem::path savepath) {
-    std::string proto(128, ' ');
-    boost::asio::read(*socket, buffer(proto, 64));
+    boost::asio::ip::tcp::no_delay option(true);
+    socket->set_option(option);
+    std::string proto(128, '\0');
+    // boost::asio::read(*socket, buffer(proto, 64));
+    socket->read_some(buffer(proto));
     cout << proto << endl;
     std::istringstream is(proto);
     string filename;
@@ -43,6 +46,7 @@ void getfile(pSocket socket, const std::string& filepath,
         out << buf;
     }
     if (_left != 0 && socket->is_open()) {
+        cout << "read left" << endl;
         socket->read_some(buffer(buf, _left));
         for (auto i = 0; i < _left; ++i)
             out << buf[i];
