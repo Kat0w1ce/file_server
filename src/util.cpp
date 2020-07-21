@@ -30,62 +30,54 @@ void getfile(pSocket socket, const std::string& filepath,
                         << " blocksize: " << _blocksize
                         << " blocks: " << _blocks
                         << " last block size: " << _left;
+
     std::ofstream out(rst_path.string(), std::iostream::out);
     if (!out.is_open()) {
         logger(Level::Error) << "open file error" << std::endl;
         return;
     }
 
-    std::ostringstream idx_out;
-    idx_out << "expect 0" << endl;
-    std::string index_buf = idx_out.str();
-    index_buf.append(32 - index_buf.size(), ' ');
-    socket->send(buffer(index_buf, 32));
-    std::string buf(blocksize, '\0');
+    // std::string index_buf = "expect 0";
+    const std::string exp = "expect ";
+    std::string buf(blocksize + 8, '\0');
     for (int i = 0; i < _blocks; ++i) {
-        socket->read_some(buffer(index_buf));
-        cout << "get: " << index_buf << endl;
-        std::istringstream idx_in(index_buf);
-        string tosend;
-        // get index
-        int index;
-        idx_in >> tosend >> index;
-
+        std::string cmd = "expect ";
         if (!socket->is_open()) {
             logger(Level::Error) << "receive" << filepath << " failed at " << i
                                  << " of " << _blocks;
             return;
         }
-        if (index == i) {
-            cout << "yes" << endl;
-
-            auto cnt = socket->read_some(buffer(buf));
-            out << buf;
-            std::ostringstream idx_stream;
-            idx_stream << "expect " << (i + 1) << endl;
-            cout << "idx_out" << idx_stream.str() << endl;
-            index_buf.clear();
-            index_buf = idx_stream.str();
-            index_buf.append(32 - index_buf.size(), ' ');
-            cout << "index_buf " << index_buf << endl;
-
+        std::string index_buf = exp + std::to_string(i);
+        cout << index_buf << endl;
+        index_buf.append(32 - index_buf.size(), ' ');
+        socket->send(buffer(index_buf, 32));
+        socket->wait(boost::asio::socket_base::wait_type::wait_read);
+        usleep(50);
+        socket->read_some(buffer(buf));
+        auto idx = buf.substr(0, 8);
+        auto cnt = std::stoi(idx);
+        if (cnt == i) {
+            cout << "yes " << cnt << endl;
+            auto data = buf.substr(8, blocksize);
+            out << data;
             if (i + 1 == _blocks) {
-                std::string s("left 0");
-                s.append(32 - s.size(), ' ');
-                socket->send(buffer(s));
+                // cmd += std::to_string(-1);
+                cout << "read left" << endl;
                 break;
+            } else {
+                cmd += std::to_string(i + 1);
             }
-            socket->send(buffer(index_buf));
-
+            cmd.append(32 - cmd.size(), ' ');
+            socket->send(buffer(cmd));
         } else {
-            cout << "retry" << endl;
-            socket->send(buffer(index_buf));
-
-            --i;
+            cout << "retry " << idx << endl;
+            cmd += std::to_string(i);
+            cmd.append(32 - cmd.size(), ' ');
+            socket->send(buffer(cmd));
+            i--;
         }
     }
     if (_left != 0 && socket->is_open()) {
-        cout << "read left" << endl;
         socket->wait(boost::asio::socket_base::wait_type::wait_read);
         socket->read_some(buffer(buf, _left));
         for (auto i = 0; i < _left; ++i)
@@ -111,51 +103,55 @@ void send_file(pSocket socket, const std::string& filepath) {
     s.seekg(0, s.end);
     auto filesize = s.tellg();
     s.seekg(0, s.beg);
+    string get(32, '0');
+    // string buf(blocksize, '\0');
     char* buf = new char[blocksize];
     int blocks = filesize / blocksize;
     int left = filesize % blocksize;
     std::ostringstream os;
     os << filepath << ' ';
-
     os << blocksize << ' ' << blocks << ' ' << left << endl;
     std::string proto(os.str());
     for (int i = proto.size(); i <= 128; ++i)
         proto.push_back('\0');
     cout << proto << endl;
-    int index;
-    std::string expect, idx_buf(32, ' ');
     socket->write_some(buffer(proto, 128));
+
     socket->wait(boost::asio::socket_base::wait_type::wait_write);
     logger(Level::Info) << "start to send " << tmp
                         << " blocksize: " << blocksize << " blocs " << blocks
                         << " last block size " << left;
+
     for (int i = 0; socket->is_open() && i < blocks; i++) {
         if (!socket->is_open()) {
             logger(Level::Error)
                 << "send" << filepath << " failed at " << i << " of " << blocks;
             return;
         }
-        // idx_buf.clear();
-        idx_buf = std::string(32, '\0');
-        // get expectation
-        socket->read_some(buffer(idx_buf));
-        std::istringstream idx_in(idx_buf);
-        idx_in >> expect >> index;
-        cout << "send: " << expect << ' ' << index << endl;
+        socket->read_some(buffer(get));
+        std::istringstream index(get);
+        string tmp, idxs;
+        int idx;
+        index >> tmp >> idx;
 
-        if (index == i) {
-            idx_buf.clear();
-            idx_buf += "send ";
-            idx_buf += std::to_string(i);
-            idx_buf.append(32 - idx_buf.size(), ' ');
-            socket->send(buffer(idx_buf));
-            cout << "idx send " << idx_buf << endl;
+        if (idx == i) {
             s.read(buf, blocksize);
-            socket->send(buffer(buf, blocksize));
-            socket->wait(boost::asio::socket_base::wait_type::wait_write);
+            cout << tmp << " " << idx << endl;
+        } else if (idx == -1) {
+            cout << "left" << endl;
+            break;
+        } else {
+            --i;
         }
+        std::string ss;
+        idxs = std::to_string(idx);
+        idxs.append(8 - idxs.size(), ' ');
+        ss = idxs + string(buf);
+        socket->send(buffer(ss, 8 + blocksize));
+        socket->wait(boost::asio::socket_base::wait_type::wait_write);
     }
-    socket->read_some(buffer(idx_buf));
+    // socket->read_some(buffer(get));
+    cout << "left " << get << endl;
     if (left != 0) {
         s.read(buf, left);
         socket->send(buffer(buf, left));
@@ -163,8 +159,8 @@ void send_file(pSocket socket, const std::string& filepath) {
     }
     s.close();
     logger(Level::Info) << "send " << filepath << " sucessfully";
-    delete[] buf;
     sleep(1);
+    delete[] buf;
 }
 
 void senddir(pSocket socket, const std::string& filepath) {
