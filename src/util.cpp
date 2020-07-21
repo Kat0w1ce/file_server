@@ -15,6 +15,7 @@ void getfile(pSocket socket, const std::string& filepath,
     socket->set_option(option);
     std::string proto(128, '\0');
     // boost::asio::read(*socket, buffer(proto, 64));
+    socket->wait(boost::asio::socket_base::wait_type::wait_read);
     socket->read_some(buffer(proto));
     cout << proto << endl;
     std::istringstream is(proto);
@@ -42,11 +43,13 @@ void getfile(pSocket socket, const std::string& filepath,
                                  << " of " << _blocks;
             return;
         }
+        socket->wait(boost::asio::socket_base::wait_type::wait_read);
         auto cnt = socket->read_some(buffer(buf));
         out << buf;
     }
     if (_left != 0 && socket->is_open()) {
         cout << "read left" << endl;
+        socket->wait(boost::asio::socket_base::wait_type::wait_read);
         socket->read_some(buffer(buf, _left));
         for (auto i = 0; i < _left; ++i)
             out << buf[i];
@@ -83,6 +86,7 @@ void send_file(pSocket socket, const std::string& filepath) {
         proto.push_back('\0');
     cout << proto << endl;
     socket->write_some(buffer(proto, 128));
+    socket->wait(boost::asio::socket_base::wait_type::wait_write);
     logger(Level::Info) << "start to send " << tmp
                         << " blocksize: " << blocksize << " blocs " << blocks
                         << " last block size " << left;
@@ -94,10 +98,12 @@ void send_file(pSocket socket, const std::string& filepath) {
             return;
         }
         socket->send(buffer(buf, blocksize));
+        socket->wait(boost::asio::socket_base::wait_type::wait_write);
     }
     if (left != 0) {
         s.read(buf, left);
         socket->send(buffer(buf, left));
+        socket->wait(boost::asio::socket_base::wait_type::wait_write);
     }
     s.close();
     logger(Level::Info) << "send " << filepath << " sucessfully";
@@ -120,6 +126,7 @@ void senddir(pSocket socket, const std::string& filepath) {
     string proto(os.str());
     proto += string(64 - proto.size(), ' ');
     socket->send(buffer(proto));
+    socket->wait(boost::asio::socket_base::wait_type::wait_write);
     std::filesystem::directory_iterator ditor(p);
     const std::filesystem::directory_iterator dend;
     while (socket->is_open() && ditor != dend) {
