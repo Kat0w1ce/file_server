@@ -42,6 +42,7 @@ void getfile(pSocket socket, const std::string& filepath,
                                  << " of " << _blocks;
             return;
         }
+        cout << "block :" << i << endl;
         auto cnt = socket->read_some(buffer(buf));
         out << buf;
     }
@@ -124,6 +125,8 @@ void senddir(pSocket socket, const std::string& filepath) {
     const std::filesystem::directory_iterator dend;
     while (socket->is_open() && ditor != dend) {
         // cout << ditor->path().string();
+        if (ditor->is_directory()) continue;
+        if (ditor->is_symlink()) continue;
         send_file(socket, ditor->path().string());
         ++ditor;
     }
