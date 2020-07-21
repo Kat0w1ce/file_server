@@ -72,7 +72,8 @@ void send_file(pSocket socket, const std::string& filepath) {
     s.seekg(0, s.end);
     auto filesize = s.tellg();
     s.seekg(0, s.beg);
-    char* buf = new char[blocksize];
+    // char* buf = new char[blocksize];
+    std::string buf(blocksize, '\0');
     int blocks = filesize / blocksize;
     int left = filesize % blocksize;
     std::ostringstream os;
@@ -88,7 +89,7 @@ void send_file(pSocket socket, const std::string& filepath) {
                         << " blocksize: " << blocksize << " blocs " << blocks
                         << " last block size " << left;
     for (int i = 0; socket->is_open() && i < blocks; i++) {
-        s.read(buf, blocksize);
+        s.read(const_cast<char*>(buf.c_str()), blocksize);
         if (!socket->is_open()) {
             logger(Level::Error)
                 << "send" << filepath << " failed at " << i << " of " << blocks;
@@ -97,12 +98,12 @@ void send_file(pSocket socket, const std::string& filepath) {
         socket->send(buffer(buf, blocksize));
     }
     if (left != 0) {
-        s.read(buf, left);
+        s.read(const_cast<char*>(buf.c_str()), left);
         socket->send(buffer(buf, left));
     }
     s.close();
     logger(Level::Info) << "send " << filepath << " sucessfully";
-    delete[] buf;
+    // delete[] buf;
     sleep(1);
 }
 
