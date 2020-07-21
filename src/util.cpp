@@ -36,16 +36,53 @@ void getfile(pSocket socket, const std::string& filepath,
         return;
     }
 
+    std::ostringstream idx_out;
+    idx_out << "expect 0" << endl;
+    std::string index_buf = idx_out.str();
+    index_buf.append(32 - index_buf.size(), ' ');
+    socket->send(buffer(index_buf, 32));
     std::string buf(blocksize, '\0');
     for (int i = 0; i < _blocks; ++i) {
+        socket->read_some(buffer(index_buf));
+        cout << "get: " << index_buf << endl;
+        std::istringstream idx_in(index_buf);
+        string tosend;
+        // get index
+        int index;
+        idx_in >> tosend >> index;
+
         if (!socket->is_open()) {
             logger(Level::Error) << "receive" << filepath << " failed at " << i
                                  << " of " << _blocks;
             return;
         }
-        socket->wait(boost::asio::socket_base::wait_type::wait_read);
-        auto cnt = socket->read_some(buffer(buf));
-        out << buf;
+        if (index == i) {
+            cout << "yes" << endl;
+
+            auto cnt = socket->read_some(buffer(buf));
+            out << buf;
+            std::ostringstream idx_stream;
+            idx_stream << "expect " << (i + 1) << endl;
+            cout << "idx_out" << idx_stream.str() << endl;
+            index_buf.clear();
+            index_buf = idx_stream.str();
+            index_buf.append(32 - index_buf.size(), ' ');
+            cout << "index_buf " << index_buf << endl;
+
+            if (i + 1 == _blocks) {
+                std::string s("left 0");
+                s.append(32 - s.size(), ' ');
+                socket->send(buffer(s));
+                break;
+            }
+            socket->send(buffer(index_buf));
+
+        } else {
+            cout << "retry" << endl;
+            socket->send(buffer(index_buf));
+
+            --i;
+        }
     }
     if (_left != 0 && socket->is_open()) {
         cout << "read left" << endl;
@@ -85,21 +122,40 @@ void send_file(pSocket socket, const std::string& filepath) {
     for (int i = proto.size(); i <= 128; ++i)
         proto.push_back('\0');
     cout << proto << endl;
+    int index;
+    std::string expect, idx_buf(32, ' ');
     socket->write_some(buffer(proto, 128));
     socket->wait(boost::asio::socket_base::wait_type::wait_write);
     logger(Level::Info) << "start to send " << tmp
                         << " blocksize: " << blocksize << " blocs " << blocks
                         << " last block size " << left;
     for (int i = 0; socket->is_open() && i < blocks; i++) {
-        s.read(buf, blocksize);
         if (!socket->is_open()) {
             logger(Level::Error)
                 << "send" << filepath << " failed at " << i << " of " << blocks;
             return;
         }
-        socket->send(buffer(buf, blocksize));
-        socket->wait(boost::asio::socket_base::wait_type::wait_write);
+        // idx_buf.clear();
+        idx_buf = std::string(32, '\0');
+        // get expectation
+        socket->read_some(buffer(idx_buf));
+        std::istringstream idx_in(idx_buf);
+        idx_in >> expect >> index;
+        cout << "send: " << expect << ' ' << index << endl;
+
+        if (index == i) {
+            idx_buf.clear();
+            idx_buf += "send ";
+            idx_buf += std::to_string(i);
+            idx_buf.append(32 - idx_buf.size(), ' ');
+            socket->send(buffer(idx_buf));
+            cout << "idx send " << idx_buf << endl;
+            s.read(buf, blocksize);
+            socket->send(buffer(buf, blocksize));
+            socket->wait(boost::asio::socket_base::wait_type::wait_write);
+        }
     }
+    socket->read_some(buffer(idx_buf));
     if (left != 0) {
         s.read(buf, left);
         socket->send(buffer(buf, left));
