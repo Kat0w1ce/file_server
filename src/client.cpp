@@ -98,24 +98,24 @@ std::pair<int, std::string> client::build_cmd(
             //     cmd += op;
             // }
         }
-    } else if (argv[0] == std::string("-g")) {
+    } else if (argv[0] == std::string("get")) {
         cmd += "1 ";
         op = 1;
         std::string fn(argv[1]);
         cmd += fn;
-    } else if (argv[0] == std::string("-p")) {
+    } else if (argv[0] == std::string("post")) {
         cmd += "2 ";
         op = 2;
         char tmp[100];
         realpath(argv[1].c_str(), tmp);
         std::filesystem::path p(tmp);
         cmd += p.filename().string();
-    } else if (argv[0] == std::string("-gr")) {
+    } else if (argv[0] == std::string("get -r")) {
         cmd += "3 ";
         op = 3;
         std::string fn(argv[1]);
         cmd += fn;
-    } else if (argv[0] == std::string("-pr")) {
+    } else if (argv[0] == std::string("post -r")) {
         cmd += "4 ";
         op = 4;
         char tmp[100];

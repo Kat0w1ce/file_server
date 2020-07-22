@@ -24,7 +24,6 @@ void getfile(pSocket socket, const std::string& filepath,
     boost::asio::ip::tcp::no_delay option(true);
     socket->set_option(option);
     std::string proto(128, '\0');
-    // boost::asio::read(*socket, buffer(proto, 64));
     socket->read_some(buffer(proto));
     cout << proto << endl;
     std::istringstream is(proto);
@@ -68,7 +67,6 @@ void getfile(pSocket socket, const std::string& filepath,
             // cout << str << ' ' << stoi(str, i) << endl;
             // sleep(1);
             if (stoi(str, i) && i == index) {
-                cout << "get " << index << endl;
                 out.write(&buf[8], blocksize);
                 index++;
             } else {
@@ -77,18 +75,6 @@ void getfile(pSocket socket, const std::string& filepath,
         }
     }
 
-    // for (int i = 0; i < _blocks; ++i) {
-    //     if (!socket->is_open()) {
-    //         logger(Level::Error) << "receive" << filepath << " failed at
-    //         " <<
-    //         i
-    //                              << " of " << _blocks;
-    //         return;
-    //     }
-    //     cout << "block :" << i << endl;
-    //     auto cnt = socket->read_some(buffer(buf));
-    //     out << buf;
-    // }
     std::string cmd = exp + "left";
     cmd.resize(32);
     socket->send(buffer(cmd));
@@ -155,7 +141,6 @@ void send_file(pSocket socket, const std::string& filepath) {
             if (i == index) {
                 ss.resize(8 + blocksize, ' ');
                 s.read(&ss[8], blocksize);
-                cout << "send buf " << i << '\n' << ss << endl;
                 socket->send(buffer(ss, 8 + blocksize));
                 last_block = ss;
                 index++;
@@ -169,16 +154,6 @@ void send_file(pSocket socket, const std::string& filepath) {
     }
     socket->read_some(buffer(cmd_buf));
     cout << "cmd_buf " << cmd_buf << endl;
-    // for (int i = 0; socket->is_open() && i < blocks; i++) {
-    //     s.read(const_cast<char*>(buf.c_str()), blocksize);
-    //     if (!socket->is_open()) {
-    //         loger(Level::Error)
-    //             << "send" << filepath << " failed at " << i << " of " <<
-    //             blocks;
-    //         return;
-    //     }
-    //     socket->send(buffer(buf, blocksize));
-    // }
     if (left != 0) {
         s.read(const_cast<char*>(buf.c_str()), left);
         socket->send(buffer(buf, left));
